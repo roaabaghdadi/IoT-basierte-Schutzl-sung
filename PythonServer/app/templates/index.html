@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Safety Monitor Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            color: #0056b3;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 2.2rem;
+            border-bottom: 3px solid #0056b3;
+            padding-bottom: 10px;
+        }
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #e9ecef;
+        }
+        .critical {
+            color: #dc3545;
+            font-weight: bold;
+            background-color: #f8d7da;
+        }
+        .normal {
+            color: #28a745;
+            background-color: #d4edda;
+        }
+        .chart-container {
+            position: relative;
+            height: 500px;
+            width: 100%;
+            margin-top: 30px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #fafbfc;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .refresh-info {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: 20px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+        nav {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        nav a {
+            text-decoration: none;
+            color: #495057;
+            background-color: #e9ecef;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-right: 10px;
+            font-weight: 500;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        nav a:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        nav a.active {
+            background-color: #0056b3;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Company System Monitor – Safety Edition</h1>
+        <nav>
+            <a href="/" class="active">Dashboard</a>
+            <a href="/settings">Settings</a>
+            <a href="/logout">Logout</a>
+        </nav>
+
+        <h2>Sensorwertverlauf</h2>
+        <div class="chart-container">
+            <canvas id="sensorChart"></canvas>
+        </div>
+
+        <h2>Letzte Ereignisse</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Zeitstempel</th>
+                    <th>Sensor</th>
+                    <th>Wert</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in data %}
+                <tr>
+                    <td>{{ entry.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ entry.sensor_type }}</td>
+                    <td>{{ "%.2f"|format(entry.value) }} {{ entry.unit }}</td>
+                    <td class="{{ entry.status }}">{{ entry.status.upper() }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="refresh-info">
+            Dashboard wird alle 10 Sekunden automatisch aktualisiert
+        </div>
+    </div>
+
+    <script>
+        // Registriere das DataLabels Plugin
+        Chart.register(ChartDataLabels);
+
+        // Daten aus der Tabelle extrahieren und korrekt zuordnen
+        function extractAndAlignData() {
+            const rows = document.querySelectorAll('tbody tr');
+            const sensorData = {};
+
+            // Alle Datenpunkte sammeln und nach Sensortyp gruppieren
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const timestamp = cells[0].textContent;
+                const sensorType = cells[1].textContent;
+                const valueText = cells[2].textContent;
+                const valueMatch = valueText.match(/[-+]?\d*\.?\d+/);
+                const value = valueMatch ? parseFloat(valueMatch[0]) : 0;
+
+                if (!sensorData[sensorType]) {
+                    sensorData[sensorType] = [];
+                }
+
+                sensorData[sensorType].push({
+                    x: timestamp,  // Verwende den vollen Zeitstempel
+                    y: value
+                });
+            });
+
+            // Für jeden Sensortyp die Daten nach Zeit sortieren
+            for (const sensorType in sensorData) {
+                sensorData[sensorType].sort((a, b) => new Date(a.x) - new Date(b.x));
+            }
+
+            return sensorData;
+        }
+
+        // Vibrante Farben für verschiedene Sensortypen
+        const sensorColors = {
+            'MQ2': 'rgb(255, 99, 132)',
+            'DHT11_Humidity': 'rgb(54, 162, 235)',
+            'MQ2_CO': 'rgb(75, 192, 192)',
+            'DHT11_Temp': 'rgb(255, 159, 64)',
+            'Temperatur': 'rgb(255, 99, 132)',
+            'Druck': 'rgb(54, 162, 235)',
+            'Feuchtigkeit': 'rgb(75, 192, 192)',
+            'Gas': 'rgb(153, 102, 255)',
+            'Bewegung': 'rgb(255, 159, 64)',
+            'default': 'rgb(201, 203, 207)'
+        };
+
+        // Diagramm erstellen
+        function createChart() {
+            const ctx = document.getElementById('sensorChart').getContext('2d');
+            const sensorData = extractAndAlignData();
+
+            const datasets = [];
+
+            for (const sensorType in sensorData) {
+                const color = sensorColors[sensorType] || sensorColors.default;
+                datasets.push({
+                    label: sensorType,
+                    data: sensorData[sensorType],  // Verwende die x,y-Struktur
+                    borderColor: color,
+                    backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.1)'),
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    tension: 0.3,
+                    fill: true,
+                    datalabels: {
+                        // Korrigierte Positionierung: Oben und zentriert
+                        align: 'end',
+                        anchor: 'end',
+                        offset: -10,
+                        color: color,
+                        font: {
+                            weight: 'bold',
+                            size: 10
+                        },
+                        formatter: function(value, context) {
+                            // Greife auf den y-Wert zu
+                            return value.y ? value.y.toFixed(1) : '';
+                        }
+                    }
+                });
+            }
+
+            // Bestimme den Zeitbereich, um die beste Einheit zu wählen
+            let timeRange = 0;
+            for (const sensorType in sensorData) {
+                if (sensorData[sensorType].length > 1) {
+                    const firstTime = new Date(sensorData[sensorType][0].x).getTime();
+                    const lastTime = new Date(sensorData[sensorType][sensorData[sensorType].length - 1].x).getTime();
+                    const range = lastTime - firstTime;
+                    if (range > timeRange) {
+                        timeRange = range;
+                    }
+                }
+            }
+
+            // Wähle die beste Zeiteinheit basierend auf dem Zeitbereich
+            let timeUnit = 'second';
+            if (timeRange > 86400000) { // Mehr als ein Tag
+                timeUnit = 'day';
+            } else if (timeRange > 3600000) { // Mehr als eine Stunde
+                timeUnit = 'hour';
+            } else if (timeRange > 60000) { // Mehr als eine Minute
+                timeUnit = 'minute';
+            }
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Wert',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(1);
+                                }
+                            }
+                        },
+                        x: {
+                            type: 'time',  // Verwende Zeit-Typ für die X-Achse
+                            time: {
+                                displayFormats: {
+                                    millisecond: 'HH:mm:ss.SSS',
+                                    second: 'HH:mm:ss',
+                                    minute: 'HH:mm',
+                                    hour: 'HH:mm',
+                                    day: 'MM-dd HH:mm'
+                                },
+                                unit: timeUnit,
+                                // Entferne stepSize, damit Chart.js automatisch die beste Schrittgröße wählt
+                            },
+                            title: {
+                                display: true,
+                                text: 'Zeit',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Sensorwerte über Zeit',
+                            font: {
+                                size: 18,
+                                weight: 'bold'
+                            },
+                            padding: 20
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    // Formatiere den Zeitstempel für die Tooltip-Anzeige
+                                    const date = new Date(tooltipItems[0].parsed.x);
+                                    return 'Zeit: ' + date.toLocaleTimeString('de-DE', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        second: '2-digit'
+                                    });
+                                },
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    return context.dataset.label + ': ' + value.toFixed(2);
+                                }
+                            }
+                        },
+                        datalabels: {
+                            // Nur bei jedem zweiten Punkt anzeigen, um Überlappung zu vermeiden
+                            display: function(context) {
+                                return context.dataIndex % 2 === 0;
+                            },
+                            textAlign: 'center'
+                        }
+                    }
+                }
+            });
+        }
+
+
+        createChart();
+
+
+                setTimeout(function(){
+            window.location.reload(1);
+        }, 10000);
+    </script>
+</body>
+</html>

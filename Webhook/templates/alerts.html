@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Alert Receiver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .alert {
+            background: white;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+        .alert.critical {
+            border-left: 5px solid #ff4757;
+        }
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .alert-type {
+            font-weight: bold;
+            color: #333;
+        }
+        .alert-time {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .alert-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .detail {
+            padding: 5px 0;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .no-alerts {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .refresh-btn {
+            background: #3742fa;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .refresh-btn:hover {
+            background: #2f3542;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>IoT Alert Receiver</h1>
+        <button class="refresh-btn" onclick="location.reload()">Refresh</button>
+        
+        {% if alerts %}
+            <!-- Reversed the order of alerts to show newest first -->
+            {% for alert in alerts|reverse %}
+            <div class="alert {{ 'critical' if alert.status == 'critical' else '' }}">
+                <div class="alert-header">
+                    <span class="alert-type">{{ alert.alert_type|title }} - {{ alert.sensor_type }}</span>
+                    <span class="alert-time">{{ alert.timestamp }}</span>
+                </div>
+                <div class="alert-details">
+                    <div class="detail">
+                        <span class="detail-label">Current Value:</span> {{ alert.current_value }} {{ alert.unit }}
+                    </div>
+                    <div class="detail">
+                        <span class="detail-label">Threshold:</span> {{ alert.threshold }} {{ alert.unit }}
+                    </div>
+                    <div class="detail">
+                        <span class="detail-label">Exceeded By:</span> {{ "%.2f"|format(alert.exceeded_by) }} {{ alert.unit }}
+                    </div>
+                    <div class="detail">
+                        <span class="detail-label">Status:</span> {{ alert.status|title }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-alerts">
+                No alerts received yet.
+            </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        // Auto-refresh every 30 seconds
+        setTimeout(function() {
+            location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>

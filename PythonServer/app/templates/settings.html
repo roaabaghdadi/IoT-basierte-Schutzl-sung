@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            color: #0056b3;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 2.2rem;
+            border-bottom: 3px solid #0056b3;
+            padding-bottom: 10px;
+        }
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 30px;
+        }
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            align-items: flex-end;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+        }
+        label {
+            margin-bottom: 0.5rem;
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #495057;
+        }
+        input, select {
+            padding: 0.7rem;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            background-color: white;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus {
+            border-color: #0056b3;
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
+        }
+        button {
+            padding: 0.7rem 1.5rem;
+            background: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background: #004085;
+        }
+        button.delete {
+            background: #dc3545;
+        }
+        button.delete:hover {
+            background: #c82333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #e9ecef;
+        }
+        nav {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        nav a {
+            text-decoration: none;
+            color: #495057;
+            background-color: #e9ecef;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-right: 10px;
+            font-weight: 500;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        nav a:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        nav a.active {
+            background-color: #0056b3;
+            color: white;
+        }
+        .alert-type {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .alert-type.email {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        .alert-type.url {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        .form-row {
+            display: flex;
+            width: 100%;
+            gap: 1rem;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="/settings" class="active">Settings</a>
+            <a href="/logout">Logout</a>
+        </nav>
+
+        <h1>Alert Settings</h1>
+
+        <h2>Add New Alert</h2>
+        <form method="POST" action="/settings">
+            <div class="form-group">
+                <label for="alert_type">Alert Type:</label>
+                <select id="alert_type" name="alert_type" required onchange="toggleAlertFields()">
+                    <option value="email">Email Notification</option>
+                    <option value="url">URL/Webhook Notification</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group" id="email_field">
+                    <label for="email">Alert Email:</label>
+                    <input type="email" id="email" name="email">
+                </div>
+
+                <div class="form-group hidden" id="url_field">
+                    <label for="url">Webhook URL:</label>
+                    <input type="url" id="url" name="url" placeholder="https://example.com/webhook">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="sensor_type">Sensor Type:</label>
+                <select id="sensor_type" name="sensor_type" required>
+                    <option value="DHT11_Temp">Temperature (°C)</option>
+                    <option value="DHT11_Humidity">Humidity (%)</option>
+                    <option value="MQ2">Gas Level (ppm)</option>
+                    <option value="MQ2_CO">CO Level (ppm)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="threshold">Threshold Value:</label>
+                <input type="number" step="0.1" id="threshold" name="threshold" required>
+            </div>
+            <button type="submit">Add Alert</button>
+        </form>
+
+        <h2>Current Alerts</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Destination</th>
+                    <th>Sensor Type</th>
+                    <th>Threshold Value</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alert in alerts %}
+                <tr>
+                    <td>
+                        <span class="alert-type {{ alert.alert_type }}">
+                            {{ 'Email' if alert.alert_type == 'email' else 'URL' }}
+                        </span>
+                    </td>
+                    <td>{{ alert.email if alert.alert_type == 'email' else alert.url }}</td>
+                    <td>{{ alert.sensor_type }}</td>
+                    <td>{{ alert.threshold_value }}</td>
+                    <td>
+                        <form method="POST" action="/settings/delete/{{ alert.id }}" style="display:inline;">
+                            <button type="submit" class="delete">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5">No alerts configured.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function toggleAlertFields() {
+            const alertType = document.getElementById('alert_type').value;
+            const emailField = document.getElementById('email_field');
+            const urlField = document.getElementById('url_field');
+            const emailInput = document.getElementById('email');
+            const urlInput = document.getElementById('url');
+
+            if (alertType === 'email') {
+                emailField.classList.remove('hidden');
+                urlField.classList.add('hidden');
+                emailInput.required = true;
+                urlInput.required = false;
+            } else {
+                emailField.classList.add('hidden');
+                urlField.classList.remove('hidden');
+                emailInput.required = false;
+                urlInput.required = true;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleAlertFields();
+        });
+    </script>
+</body>
+</html>

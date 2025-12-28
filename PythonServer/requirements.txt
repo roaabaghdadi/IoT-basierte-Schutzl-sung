@@ -1,0 +1,6 @@
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+gunicorn
+mysql-connector-python
+python-dotenv
