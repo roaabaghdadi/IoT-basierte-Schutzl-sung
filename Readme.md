@@ -1,11 +1,25 @@
 
 #  IoT-basierte-Schutzlösung
-
-
-
 Ein einfaches, datenschutzfreundliches System zur Echtzeit-Überwachung von Temperatur, Luftfeuchte und gefährlichen Gasen.
 
 
+
+## Test
+Zur Test-URL navigieren:
+
+Einen Webbrowser öffnen.
+
+Die Test-URL (https://roaabaghdadi.pythonanywhere.com/login) in die Adressleiste eingeben und Enter drücken.
+
+Anmeldedaten eingeben:
+
+Das Feld E-Mail auf der Login-Seite finden.
+
+Die registrierte Test-E-Mail-Adresse eingeben (admin@safety.com).
+
+Das entsprechende gültige Passwort eingeben (secret123).
+
+Sensorwerte werden angezeigt.
 
 
 ## 📦 Benötigte Hardware
@@ -39,10 +53,6 @@ Aktoren (optional):
   Buzzer → Digital Pin 3
 ```
 
-
-
-
-
 ## 📦 Beispiel-Daten (JSON)
 
 Der Arduino sendet folgendes Format an `POST /api/data`:
@@ -75,11 +85,11 @@ Der Arduino sendet folgendes Format an `POST /api/data`:
 
 DHT dht(DHTPIN, DHTTYPE);
 
-const char* ssid = "MagentaWLAN-NHL6";
-const char* pass = "R.K.0106199018081994";
+const char* ssid = "your Netword SSID";
+const char* pass = "Network Password";
 
 int status = WL_IDLE_STATUS;
-char server[] = "khaledkassar.pythonanywhere.com";
+char server[] = "roaabaghdadi.pythonanywhere.com";
 int port = 80;  // HTTP port
 
 WiFiClient client;

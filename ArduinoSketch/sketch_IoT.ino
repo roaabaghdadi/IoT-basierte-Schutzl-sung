@@ -10,11 +10,11 @@
 
 DHT dht(DHTPIN, DHTTYPE);
 
-const char* ssid = "MagentaWLAN-NHL6";
-const char* pass = "R.K.0106199018081994"; 
+const char* ssid = "Your Network-SSID";
+const char* pass = "Network Password"; 
 
 int status = WL_IDLE_STATUS;
-char server[] = "khaledkassar.pythonanywhere.com"; 
+char server[] = "roaabaghdadi.pythonanywhere.com"; 
 int port = 80;  // HTTP port
 
 WiFiClient client;

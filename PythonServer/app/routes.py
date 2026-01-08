@@ -7,7 +7,7 @@ import smtplib
 import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime
+from datetime import datetime, timedelta
 
 main_bp = Blueprint('main', __name__)
 
@@ -39,7 +39,9 @@ def logout():
 def dashboard():
     if 'user_id' not in session:
         return redirect('/login')
-
+    twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
+    SensorData.query.filter(SensorData.timestamp < twenty_four_hours_ago).delete()
+    db.session.commit()
     latest_data = SensorData.query.order_by(SensorData.timestamp.desc()).limit(100).all()
     return render_template('index.html', data=latest_data)
 
